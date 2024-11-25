@@ -3,13 +3,15 @@ using namespace std;
 
 extern "C" // to avoid name mangling, meaning other code can see this function written in C, with name initializePlugin
 {
+    // Plugin initialization
     void initializePlugin()
     {
         cout << "Email Notification Plugin Initialized.\n";
     }
 
-    void sendEmail(const string &message)
+    // Hook to handle new notifications
+    void onNotificationReceived(const string &notification)
     {
-        cout << "Email: " << message << "\n";
+        cout << "[Email Plugin] New Notification: " << notification << "\n";
     }
 }

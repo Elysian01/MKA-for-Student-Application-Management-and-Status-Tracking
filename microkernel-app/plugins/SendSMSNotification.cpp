@@ -3,13 +3,15 @@ using namespace std;
 
 extern "C"
 {
+    // Plugin initialization
     void initializePlugin()
     {
         cout << "SMS Notification Plugin Initialized.\n";
     }
 
-    void sendSMS(const string &message)
+    // Hook to handle new notifications
+    void onNotificationReceived(const string &notification)
     {
-        cout << "SMS: " << message << "\n";
+        cout << "[SMS Plugin] New Notification: " << notification << "\n";
     }
 }
