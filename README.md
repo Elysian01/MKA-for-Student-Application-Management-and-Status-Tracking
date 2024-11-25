@@ -5,21 +5,7 @@ Project works only on Linux environment
 
 ## [Main Application](./microkernal-app)
 
-### Features Demonstrated
-
-1. Dynamic Plugin Loading: Choose one or both plugins at runtime.
-2. Core with Hooks: The core exposes an alert list (std::vector) for plugins to access and send notifications. Particularly it uses, Observer Design Pattern, to exposes particular information.
-
-3. Plugin Notification System: Extensions utilize the core's hook to trigger notifications (SMS/Email).
-4. Menu-Based Interaction: Includes student registration, document verification, application tracking, and dashboard. 
-
 ### Plugin Discovery Mechanism and a Dynamic Registration Process.
-
-Achieve this by:
-
-1. Using a plugins directory: All plugins are placed in a specified folder (e.g., ./plugins/).
-2. Scanning the directory: At runtime, the core scans the directory for .so files.
-3. Dynamic loading and registration: Each plugin implements a standard set of exported functions, such as initializePlugin and getNotificationHandler. These functions allow the core to dynamically load and attach plugins.
 
 ### Key Concepts
 
@@ -54,6 +40,13 @@ A central discovery service reads all plugins, queries their metadata, and regis
 ### **SMS Notification Plugin (Notification)**
 - **Type**: `"notification"`
 - **Task**: Send sms alerts for new notifications.
+
+Achieve this by:
+
+1. Using a plugins directory: All plugins are placed in a specified folder (e.g., ./plugins/).
+2. Scanning the directory: At runtime, the core scans the directory for .so files.
+3. Dynamic loading and registration: Each plugin implements a standard set of exported functions, such as initializePlugin and getNotificationHandler. These functions allow the core to dynamically load and attach plugins.
+
 
 ### Build
 
