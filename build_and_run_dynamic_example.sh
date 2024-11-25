@@ -1,11 +1,13 @@
 # Ensure the script exits on any error
 set -e
 
+PROJECT_FOLDER="dynamic_loading_lib_example"
+
 printf "Starting the build process...\n"
 
 # Build plugins
 printf "Building plugins...\n"
-cd project/plugins
+cd ${PROJECT_FOLDER}/plugins
 make
 printf "Plugins Ready\n\n"
 
@@ -15,7 +17,7 @@ cd ..
 # Build core
 printf "Building core...\n"
 cd ..
-cd project/core
+cd ${PROJECT_FOLDER}/core
 make
 printf "Core Ready\n\n"
 
@@ -26,4 +28,4 @@ cd ..
 printf "Running the core application...\n"
 echo "------------------------------------------------"
 printf "\n\n"
-./core/core
+./core/core_obj

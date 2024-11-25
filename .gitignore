@@ -1,5 +1,7 @@
 # Object Files
 *.o
+core_obj
+
 
 # Directories
 .vscode/

@@ -1,7 +1,7 @@
 CXX = g++
 CXXFLAGS = -std=c++17 -ldl
 CORE_SRC = core.cpp
-CORE_OUT = core
+CORE_OUT = core_obj
 
 all: $(CORE_OUT)
 
