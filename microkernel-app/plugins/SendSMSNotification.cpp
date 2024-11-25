@@ -3,6 +3,10 @@ using namespace std;
 
 extern "C"
 {
+    const char* getPluginType() {
+        return "notification";
+    }
+
     // Plugin initialization
     void initializePlugin()
     {

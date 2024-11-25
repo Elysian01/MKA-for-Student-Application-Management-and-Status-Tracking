@@ -1,6 +1,6 @@
 CXX = g++
 CXXFLAGS = -shared -fPIC
-PLUGIN_SOURCES = SendEmailNotification.cpp SendSMSNotification.cpp
+PLUGIN_SOURCES = SendEmailNotification.cpp SendSMSNotification.cpp RecommendationStatistics.cpp
 SO_DIR = so
 
 all: $(SO_DIR) $(addprefix $(SO_DIR)/, $(PLUGIN_SOURCES:.cpp=.so))

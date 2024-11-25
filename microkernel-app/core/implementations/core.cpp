@@ -11,45 +11,112 @@
 namespace fs = std::filesystem;
 using namespace std;
 
-// Function to load and register a single plugin
-void loadPlugin(const string &pluginPath)
-{
-    cout << "Loading plugin: " << pluginPath << "\n";
+// // Function to load and register a single plugin
+// void loadPlugin(const string &pluginPath)
+// {
+//     cout << "Loading plugin: " << pluginPath << "\n";
 
-    // Load the plugin
-    void *pluginHandle = dlopen(pluginPath.c_str(), RTLD_LAZY);
-    if (!pluginHandle)
-    {
-        cerr << "Failed to load plugin: " << pluginPath << "\n";
-        cerr << dlerror() << "\n";
+//     // Load the plugin
+//     void *pluginHandle = dlopen(pluginPath.c_str(), RTLD_LAZY);
+//     if (!pluginHandle)
+//     {
+//         cerr << "Failed to load plugin: " << pluginPath << "\n";
+//         cerr << dlerror() << "\n";
+//         return;
+//     }
+
+//     // Get the initializePlugin function
+//     void (*initializePlugin)() = (void (*)())dlsym(pluginHandle, "initializePlugin");
+//     if (!initializePlugin)
+//     {
+//         cerr << "Failed to find initializePlugin in " << pluginPath << "\n";
+//         cerr << dlerror() << "\n";
+//         dlclose(pluginHandle);
+//         return;
+//     }
+
+//     // Get the onNotificationReceived function
+//     void (*notificationHandler)(const string &) = (void (*)(const string &))dlsym(pluginHandle, "onNotificationReceived");
+//     if (!notificationHandler)
+//     {
+//         cerr << "Failed to find onNotificationReceived in " << pluginPath << "\n";
+//         cerr << dlerror() << "\n";
+//         dlclose(pluginHandle);
+//         return;
+//     }
+
+//     // Initialize the plugin and register its notification handler
+//     initializePlugin();
+//     Microkernel::addObserver(notificationHandler);
+
+//     cout << "Plugin loaded and registered successfully: " << pluginPath << "\n\n";
+// }
+
+
+struct PluginTask {
+    string taskName;
+    void (*executeTask)();
+};
+
+vector<void (*)(const string&)> notificationHandlers;
+vector<PluginTask> statisticsTasks;
+
+// Load and register a plugin
+void loadPlugin(const string& pluginPath) {
+
+    void* pluginHandle = dlopen(pluginPath.c_str(), RTLD_LAZY);
+    if (!pluginHandle) {
+        cerr << "Failed to load plugin: " << dlerror() << "\n";
         return;
     }
 
-    // Get the initializePlugin function
-    void (*initializePlugin)() = (void (*)())dlsym(pluginHandle, "initializePlugin");
-    if (!initializePlugin)
-    {
-        cerr << "Failed to find initializePlugin in " << pluginPath << "\n";
-        cerr << dlerror() << "\n";
+    // Get plugin type
+    const char* (*getPluginType)() = (const char* (*)())dlsym(pluginHandle, "getPluginType");
+    if (!getPluginType) {
+        cerr << "Failed to find getPluginType: " << dlerror() << "\n";
         dlclose(pluginHandle);
         return;
     }
 
-    // Get the onNotificationReceived function
-    void (*notificationHandler)(const string &) = (void (*)(const string &))dlsym(pluginHandle, "onNotificationReceived");
-    if (!notificationHandler)
-    {
-        cerr << "Failed to find onNotificationReceived in " << pluginPath << "\n";
-        cerr << dlerror() << "\n";
-        dlclose(pluginHandle);
-        return;
+    string pluginType = getPluginType();
+
+    // Register notification plugins
+    if (pluginType == "notification") {
+        void (*onNotificationReceived)(const string&) = (void (*)(const string&))dlsym(pluginHandle, "onNotificationReceived");
+        if (!onNotificationReceived) {
+            cerr << "Failed to find onNotificationReceived: " << dlerror() << "\n";
+            dlclose(pluginHandle);
+            return;
+        }
+        notificationHandlers.push_back(onNotificationReceived);
+        Microkernel::addObserver(onNotificationReceived);
+        cout << "Notification Plugin Loaded: " << pluginPath << "\n";
     }
 
-    // Initialize the plugin and register its notification handler
-    initializePlugin();
-    Microkernel::addObserver(notificationHandler);
+    // Register statistics plugins
+    else if (pluginType == "statistics") {
+        const char* (*getTaskName)() = (const char* (*)())dlsym(pluginHandle, "getTaskName");
+        void (*executeTask)() = (void (*)())dlsym(pluginHandle, "executeTask");
 
-    cout << "Plugin loaded and registered successfully: " << pluginPath << "\n\n";
+        if (!getTaskName || !executeTask) {
+            cerr << "Failed to find statistics plugin functions: " << dlerror() << "\n";
+            dlclose(pluginHandle);
+            return;
+        }
+
+        PluginTask task = {getTaskName(), executeTask};
+        statisticsTasks.push_back(task);
+        cout << "Statistics Plugin Loaded: " << task.taskName << "\n";
+    }
+}
+
+// Discover and load all plugins
+void discoverPlugins(const string& pluginDir) {
+    for (const auto& entry : fs::directory_iterator(pluginDir)) {
+        if (entry.path().extension() == ".so") {
+            loadPlugin(entry.path().string());
+        }
+    }
 }
 
 // Function to configure and load plugins
@@ -126,6 +193,40 @@ void configurePlugins()
     }
 }
 
+void displayMenu() {
+    int choice;
+    while (true) {
+        std::cout << "\nMain Menu:\n";
+        std::cout << "1. Application Tracking\n";
+        std::cout << "2. Apply for Institute\n";
+
+        // Add statistics plugin tasks
+        for (size_t i = 0; i < statisticsTasks.size(); ++i) {
+            std::cout << i + 3 << ". " << statisticsTasks[i].taskName << "\n";
+        }
+
+        std::cout << statisticsTasks.size() + 3 << ". Exit\n";
+        std::cout << "Choose an option: ";
+        std::cin >> choice;
+
+        if (choice == 1) {
+            Microkernel::trackApplicationStatus();
+        } else if (choice == 2) {
+            Microkernel::applyForInstitute();
+        } else if (choice > 2 && choice <= (int)(statisticsTasks.size() + 2)) {
+            // Execute the selected plugin task
+            statisticsTasks[choice - 3].executeTask();
+        } else if (choice == (int)(statisticsTasks.size() + 3)) {
+            std::cout << "Exiting...\n";
+            break;
+        } else {
+            std::cout << "Invalid option. Try again.\n";
+        }
+    }
+}
+
+
+
 // Main function
 int main()
 {
@@ -135,43 +236,14 @@ int main()
     configurePlugins();
 
     // Main flow
-    cout << "Enter Student Name: ";
+    cout << "\n\nEnter Student Name: ";
     cin >> studentName;
     cout << "Enter Roll Number: ";
     cin >> rollNumber;
     Microkernel::registerStudent(studentName, rollNumber);
     DocumentVerification::verifyDocuments();
 
-    int choice;
-    while (true)
-    {
-        cout << "\nMenu:\n";
-        cout << "1. Application Tracking\n";
-        cout << "2. Apply for Institute\n";
-        cout << "3. Show Dashboard\n";
-        cout << "4. Exit\n";
-        cout << "Choose an option: ";
-        cin >> choice;
-        cout << "\n";
-
-        switch (choice)
-        {
-        case 1:
-            Microkernel::trackApplicationStatus();
-            break;
-        case 2:
-            Microkernel::applyForInstitute();
-            break;
-        case 3:
-            Microkernel::showDashboard(studentName, rollNumber);
-            break;
-        case 4:
-            cout << "Exiting...\n";
-            return 0;
-        default:
-            cout << "Invalid option. Try again.\n";
-        }
-    }
+    displayMenu();
 
     return 0;
 }
