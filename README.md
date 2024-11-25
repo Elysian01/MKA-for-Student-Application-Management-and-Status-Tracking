@@ -23,13 +23,13 @@ Achieve this by:
 
 ### Key Concepts
 
-### **Plugin Metadata**
+#### **Plugin Metadata**
 Each plugin should provide metadata that specifies its type (e.g., `"notification"`, `"statistics"`) and necessary functions for integration.
 
-### **Dynamic Discovery**
+#### **Dynamic Discovery**
 A central discovery service reads all plugins, queries their metadata, and registers them based on their type.
 
-### **Integration Logic**
+#### **Integration Logic**
 
 - **Notification Plugins**: Add to the observer list for automatic triggering.
 - **Statistics Plugins**: Add to the user-triggerable menu.
@@ -43,15 +43,15 @@ A central discovery service reads all plugins, queries their metadata, and regis
 
 ### Example Plugins
 
-### **Recommendation Plugin (Statistics)**
+#### **Recommendation Plugin (Statistics)**
 - **Type**: `"statistics"`
 - **Task**: Recommend institutes based on user data.
 
-### **Email Notification Plugin (Notification)**
+#### **Email Notification Plugin (Notification)**
 - **Type**: `"notification"`
 - **Task**: Send email alerts for new notifications.
 
-### **SMS Notification Plugin (Notification)**
+#### **SMS Notification Plugin (Notification)**
 - **Type**: `"notification"`
 - **Task**: Send sms alerts for new notifications.
 
