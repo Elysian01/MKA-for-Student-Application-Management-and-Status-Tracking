@@ -11,48 +11,6 @@
 namespace fs = std::filesystem;
 using namespace std;
 
-// // Function to load and register a single plugin
-// void loadPlugin(const string &pluginPath)
-// {
-//     cout << "Loading plugin: " << pluginPath << "\n";
-
-//     // Load the plugin
-//     void *pluginHandle = dlopen(pluginPath.c_str(), RTLD_LAZY);
-//     if (!pluginHandle)
-//     {
-//         cerr << "Failed to load plugin: " << pluginPath << "\n";
-//         cerr << dlerror() << "\n";
-//         return;
-//     }
-
-//     // Get the initializePlugin function
-//     void (*initializePlugin)() = (void (*)())dlsym(pluginHandle, "initializePlugin");
-//     if (!initializePlugin)
-//     {
-//         cerr << "Failed to find initializePlugin in " << pluginPath << "\n";
-//         cerr << dlerror() << "\n";
-//         dlclose(pluginHandle);
-//         return;
-//     }
-
-//     // Get the onNotificationReceived function
-//     void (*notificationHandler)(const string &) = (void (*)(const string &))dlsym(pluginHandle, "onNotificationReceived");
-//     if (!notificationHandler)
-//     {
-//         cerr << "Failed to find onNotificationReceived in " << pluginPath << "\n";
-//         cerr << dlerror() << "\n";
-//         dlclose(pluginHandle);
-//         return;
-//     }
-
-//     // Initialize the plugin and register its notification handler
-//     initializePlugin();
-//     Microkernel::addObserver(notificationHandler);
-
-//     cout << "Plugin loaded and registered successfully: " << pluginPath << "\n\n";
-// }
-
-
 struct PluginTask {
     string taskName;
     void (*executeTask)();
@@ -237,7 +195,8 @@ int main()
 
     // Main flow
     cout << "\n\nEnter Student Name: ";
-    cin >> studentName;
+    cin.ignore();              // Clear leftover newline character from the input buffer
+    getline(cin, studentName); // Use getline for studentName to handle spaces
     cout << "Enter Roll Number: ";
     cin >> rollNumber;
     Microkernel::registerStudent(studentName, rollNumber);
