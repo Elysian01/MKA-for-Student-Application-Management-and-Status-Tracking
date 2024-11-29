@@ -89,7 +89,7 @@ void configurePlugins() {
         cin >> pluginChoice;
 
         if (pluginChoice > 0 && pluginChoice <= (int)plugins.size()) {
-            loadPlugin(plugins[pluginChoice - 1]);
+                (plugins[pluginChoice - 1]);
         } else {
             cout << "Invalid plugin number.\n";
         }

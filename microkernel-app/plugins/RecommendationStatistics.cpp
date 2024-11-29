@@ -3,6 +3,12 @@ using namespace std;
 
 extern "C" // to avoid name mangling, meaning other code can see this function written in C, with name initializePlugin
 {
+    // Plugin initialization
+    void initializePlugin(){
+        cout << "Recommendation Statistics Plugin Initialized.\n";
+    }
+
+    
     const char* getPluginType() {
         return "statistics";
     }
@@ -16,11 +22,6 @@ extern "C" // to avoid name mangling, meaning other code can see this function w
     }
 
 
-    // Plugin initialization
-    void initializePlugin()
-    {
-        cout << "Recommendation Statistics Plugin Initialized.\n";
-    }
 
    
 }
