@@ -11,4 +11,4 @@ public:
     static void trackApplicationStatus();
 };
 
-#endif // APPLICATION_STATUS_TRACKER_H
+#endif 

@@ -11,4 +11,4 @@ public:
     static void showAlerts();
 };
 
-#endif // STUDENT_DASHBOARD_H
+#endif

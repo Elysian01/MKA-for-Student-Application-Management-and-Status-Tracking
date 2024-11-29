@@ -4,31 +4,23 @@
 #include <dlfcn.h>    // For dynamic library loading
 #include <filesystem> // For reading directory contents
 #include "../headers/Microkernel.h"
+#include "../headers/NotificationPluginLoader.h"
+#include "../headers/StatisticsPluginLoader.h"
 #include "../headers/DocumentVerification.h"
-#include "../headers/StudentApplicationSubmission.h"
-#include "../headers/StudentDashboard.h"
 
 namespace fs = std::filesystem;
 using namespace std;
 
-struct PluginTask {
-    string taskName;
-    void (*executeTask)();
-};
-
-vector<void (*)(const string&)> notificationHandlers;
-vector<PluginTask> statisticsTasks;
-
-// Load and register a plugin
-void loadPlugin(const string& pluginPath) {
-
-    void* pluginHandle = dlopen(pluginPath.c_str(), RTLD_LAZY);
+// Load and register a plugin using the appropriate loader
+void loadPlugin(const string &pluginPath) {
+    // Open the plugin using dlopen
+    void *pluginHandle = dlopen(pluginPath.c_str(), RTLD_LAZY);
     if (!pluginHandle) {
         cerr << "Failed to load plugin: " << dlerror() << "\n";
         return;
     }
 
-    // Get plugin type
+    // Get the plugin type using a common function from the plugin
     const char* (*getPluginType)() = (const char* (*)())dlsym(pluginHandle, "getPluginType");
     if (!getPluginType) {
         cerr << "Failed to find getPluginType: " << dlerror() << "\n";
@@ -37,79 +29,48 @@ void loadPlugin(const string& pluginPath) {
     }
 
     string pluginType = getPluginType();
+    dlclose(pluginHandle); // Close the handle after determining the type
 
-    // Register notification plugins
+    // Use the appropriate loader based on the plugin type
     if (pluginType == "notification") {
-        void (*onNotificationReceived)(const string&) = (void (*)(const string&))dlsym(pluginHandle, "onNotificationReceived");
-        if (!onNotificationReceived) {
-            cerr << "Failed to find onNotificationReceived: " << dlerror() << "\n";
-            dlclose(pluginHandle);
-            return;
-        }
-        notificationHandlers.push_back(onNotificationReceived);
-        Microkernel::addObserver(onNotificationReceived);
-        cout << "Notification Plugin Loaded: " << pluginPath << "\n";
-    }
-
-    // Register statistics plugins
-    else if (pluginType == "statistics") {
-        const char* (*getTaskName)() = (const char* (*)())dlsym(pluginHandle, "getTaskName");
-        void (*executeTask)() = (void (*)())dlsym(pluginHandle, "executeTask");
-
-        if (!getTaskName || !executeTask) {
-            cerr << "Failed to find statistics plugin functions: " << dlerror() << "\n";
-            dlclose(pluginHandle);
-            return;
-        }
-
-        PluginTask task = {getTaskName(), executeTask};
-        statisticsTasks.push_back(task);
-        cout << "Statistics Plugin Loaded: " << task.taskName << "\n";
+        NotificationPluginLoader loader;
+        loader.load(pluginPath);
+    } else if (pluginType == "statistics") {
+        StatisticsPluginLoader loader;
+        loader.load(pluginPath);
+    } else {
+        cerr << "Unknown plugin type: " << pluginType << "\n";
     }
 }
 
-// Discover and load all plugins
-void discoverPlugins(const string& pluginDir) {
-    for (const auto& entry : fs::directory_iterator(pluginDir)) {
-        if (entry.path().extension() == ".so") {
-            loadPlugin(entry.path().string());
-        }
-    }
-}
 
 // Function to configure and load plugins
-void configurePlugins()
-{
+void configurePlugins() {
     string pluginDir = "../plugins/so";
 
-    // Validate plugin directory
-    if (!fs::exists(pluginDir) || !fs::is_directory(pluginDir))
-    {
-        cerr << "Plugin directory not found: " << pluginDir << "\n\n";
+    // Validate the plugin directory
+    if (!fs::exists(pluginDir) || !fs::is_directory(pluginDir)) {
+        cerr << "Plugin directory not found: " << pluginDir << "\n";
         return;
     }
 
     // Gather available plugins
     vector<string> plugins;
-    for (const auto &entry : fs::directory_iterator(pluginDir))
-    {
-        if (entry.path().extension() == ".so")
-        {
-            plugins.push_back(entry.path());
+    for (const auto &entry : fs::directory_iterator(pluginDir)) {
+        if (entry.path().extension() == ".so") {
+            plugins.push_back(entry.path().string());
         }
     }
 
     // Check if plugins are available
-    if (plugins.empty())
-    {
+    if (plugins.empty()) {
         cout << "No plugins found in directory: " << pluginDir << endl;
         return;
     }
 
     // Display available plugins
     cout << "Available Plugins:\n";
-    for (size_t i = 0; i < plugins.size(); ++i)
-    {
+    for (size_t i = 0; i < plugins.size(); ++i) {
         cout << i + 1 << ". " << plugins[i] << "\n";
     }
 
@@ -121,51 +82,44 @@ void configurePlugins()
     cout << "Enter your choice: ";
     cin >> choice;
 
-    if (choice == 1)
-    {
+    if (choice == 1) {
         // User selects a single plugin
         int pluginChoice;
         cout << "Enter the plugin number to load: ";
         cin >> pluginChoice;
 
-        if (pluginChoice > 0 && pluginChoice <= (int)plugins.size())
-        {
+        if (pluginChoice > 0 && pluginChoice <= (int)plugins.size()) {
             loadPlugin(plugins[pluginChoice - 1]);
-        }
-        else
-        {
+        } else {
             cout << "Invalid plugin number.\n";
         }
-    }
-    else if (choice == 2)
-    {
+    } else if (choice == 2) {
         // Load all plugins
-        for (const auto &plugin : plugins)
-        {
+        for (const auto &plugin : plugins) {
             loadPlugin(plugin);
         }
-    }
-    else
-    {
-        cout << "Invalid option. No plugins loaded.\n\n";
+    } else {
+        cout << "Invalid option. No plugins loaded.\n";
     }
 }
 
+// Function to display the main menu
 void displayMenu() {
     int choice;
     while (true) {
-        std::cout << "\nMain Menu:\n";
-        std::cout << "1. Application Tracking\n";
-        std::cout << "2. Apply for Institute\n";
+        cout << "\nMain Menu:\n";
+        cout << "1. Application Tracking\n";
+        cout << "2. Apply for Institute\n";
 
-        // Add statistics plugin tasks
+        // Add statistics plugin tasks dynamically
+        // We got statisticsTasks from the StatisticsPluginLoader.cpp file
         for (size_t i = 0; i < statisticsTasks.size(); ++i) {
-            std::cout << i + 3 << ". " << statisticsTasks[i].taskName << "\n";
+            cout << i + 3 << ". " << statisticsTasks[i].taskName << "\n";
         }
 
-        std::cout << statisticsTasks.size() + 3 << ". Exit\n";
-        std::cout << "Choose an option: ";
-        std::cin >> choice;
+        cout << statisticsTasks.size() + 3 << ". Exit\n";
+        cout << "Choose an option: ";
+        cin >> choice;
 
         if (choice == 1) {
             Microkernel::trackApplicationStatus();
@@ -175,19 +129,16 @@ void displayMenu() {
             // Execute the selected plugin task
             statisticsTasks[choice - 3].executeTask();
         } else if (choice == (int)(statisticsTasks.size() + 3)) {
-            std::cout << "Exiting...\n";
+            cout << "Exiting...\n";
             break;
         } else {
-            std::cout << "Invalid option. Try again.\n";
+            cout << "Invalid option. Try again.\n";
         }
     }
 }
 
-
-
 // Main function
-int main()
-{
+int main() {
     string studentName, rollNumber;
 
     // Configure and load plugins

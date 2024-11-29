@@ -23,4 +23,4 @@ public:
     static void notifyObservers(const std::string &notification);
 };
 
-#endif // MICROKERNEL_H
+#endif 

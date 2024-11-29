@@ -9,4 +9,4 @@ public:
     static void submitApplication();
 };
 
-#endif // STUDENT_APPLICATION_SUBMISSION_H
+#endif 
